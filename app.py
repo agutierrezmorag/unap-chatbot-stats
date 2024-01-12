@@ -14,7 +14,7 @@ def db_connection():
     return db
 
 
-@st.cache_data
+@st.cache_data(ttl=60 * 60 * 24)
 def get_messages():
     db = db_connection()
     chats_ref = db.collection("chats")
