@@ -21,11 +21,20 @@ def load_messages():
     return messages
 
 
-def get_chat_count():
-    db = db_connection()
-    chats_ref = db.collection("chats")
-    chats = chats_ref.stream()
-    return len(list(chats))
+def get_chat_count(df):
+    return len(df)
+
+
+def get_avg_time_to_answer(df):
+    return df["time_to_answer"].mean()
+
+
+def get_message_count(df):
+    return len(df)
+
+
+def get_total_cost(df):
+    return df["tokens_total_cost_usd"].sum()
 
 
 def main():
@@ -124,7 +133,7 @@ def main():
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Chats", get_chat_count())
+        st.metric("Chats", len(df))
     with col2:
         st.metric(
             "Tiempo promedio de respuesta",
@@ -144,6 +153,43 @@ def main():
             total_cost_selected,
             delta=delta_cost,
         )
+
+    st.markdown("# 💸 Comparación de costos")
+
+    comp_col1, comp_col2 = st.columns(2)
+
+    with comp_col1:
+        chat_type1 = st.selectbox("Comparar...", options=df["chat_type"].unique())
+    with comp_col2:
+        chat_type2 = st.selectbox("Con...", options=df["chat_type"].unique())
+
+    # Calculate metrics for each chat type
+    chat_count1 = get_chat_count(df[df["chat_type"] == chat_type1])
+    chat_count2 = get_chat_count(df[df["chat_type"] == chat_type2])
+
+    avg_time_to_answer1 = get_avg_time_to_answer(df[df["chat_type"] == chat_type1])
+    avg_time_to_answer2 = get_avg_time_to_answer(df[df["chat_type"] == chat_type2])
+
+    message_count1 = get_message_count(df[df["chat_type"] == chat_type1])
+    message_count2 = get_message_count(df[df["chat_type"] == chat_type2])
+
+    total_cost1 = get_total_cost(df[df["chat_type"] == chat_type1])
+    total_cost2 = get_total_cost(df[df["chat_type"] == chat_type2])
+
+    # Display metrics side by side
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Chats", chat_count1, delta=chat_count2 - chat_count1)
+    with col2:
+        st.metric(
+            "Tiempo promedio de respuesta",
+            avg_time_to_answer1,
+            delta=avg_time_to_answer2 - avg_time_to_answer1,
+        )
+    with col3:
+        st.metric("Mensajes", message_count1, delta=message_count2 - message_count1)
+    with col4:
+        st.metric("Costo total en USD", total_cost1, delta=total_cost2 - total_cost1)
 
 
 if __name__ == "__main__":
