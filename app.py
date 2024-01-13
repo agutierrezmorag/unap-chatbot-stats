@@ -1,5 +1,6 @@
 import json
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 from google.cloud import firestore
@@ -178,19 +179,34 @@ def main():
     total_cost2 = get_total_cost(df[df["chat_type"] == chat_type2])
 
     # Display metrics side by side
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Chats", chat_count1, delta=chat_count2 - chat_count1)
-    with col2:
-        st.metric(
-            "Tiempo promedio de respuesta",
-            avg_time_to_answer1,
-            delta=avg_time_to_answer2 - avg_time_to_answer1,
+    metrics = [
+        "Chats",
+        "Tiempo promedio de respuesta",
+        "Mensajes",
+        "Costo total en USD",
+    ]
+    values1 = [chat_count1, avg_time_to_answer1, message_count1, total_cost1]
+    values2 = [chat_count2, avg_time_to_answer2, message_count2, total_cost2]
+
+    # Create columns for each metric
+    cols = st.columns(len(metrics))
+
+    for metric, value1, value2, col in zip(metrics, values1, values2, cols):
+        plt.figure(figsize=(6, 4))
+        bars = plt.bar(
+            [chat_type1, chat_type2], [value1, value2], color=["#1f77b4", "#ff7f0e"]
         )
-    with col3:
-        st.metric("Mensajes", message_count1, delta=message_count2 - message_count1)
-    with col4:
-        st.metric("Costo total en USD", total_cost1, delta=total_cost2 - total_cost1)
+        plt.title(metric)
+        plt.ylabel(metric)
+
+        # Add data labels
+        for bar in bars:
+            yval = bar.get_height()
+            plt.text(
+                bar.get_x() + bar.get_width() / 2.0, yval, round(yval, 2), va="bottom"
+            )  # va: vertical alignment
+
+        col.pyplot(plt)
 
 
 if __name__ == "__main__":
