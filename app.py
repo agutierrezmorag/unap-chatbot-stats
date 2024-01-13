@@ -53,17 +53,24 @@ def main():
         with scol1:
             start_date = st.date_input(
                 "Fecha de inicio",
-                df["submission_time"].min().date(),
+                None,
                 min_value=df["submission_time"].min().date(),
                 max_value=df["submission_time"].max().date(),
             )
         with scol2:
             end_date = st.date_input(
                 "Fecha de término",
-                df["submission_time"].max().date(),
+                None,
                 min_value=df["submission_time"].min().date(),
                 max_value=df["submission_time"].max().date(),
             )
+
+    col4, col5 = st.columns(2)
+    with col4:
+        question_query = st.text_input("Buscar por pregunta...")
+
+    with col5:
+        answer_query = st.text_input("Buscar por respuesta...")
 
     if selected_chat_type == "--":
         filtered_messages = df
@@ -77,13 +84,28 @@ def main():
             filtered_messages["user_feedback_score"] == selected_user_score
         ]
 
-    if start_date > end_date:
-        st.error("Error: End date must fall after start date.")
-    else:
-        filtered_messages = df[
-            (df["submission_time"].dt.date >= start_date)
-            & (df["submission_time"].dt.date <= end_date)
+    if question_query:
+        filtered_messages = filtered_messages[
+            filtered_messages["question"]
+            .fillna("")
+            .str.contains(question_query, case=False)
         ]
+
+    if answer_query:
+        filtered_messages = filtered_messages[
+            filtered_messages["question"]
+            .fillna("")
+            .str.contains(answer_query, case=False)
+        ]
+
+    if start_date and end_date:
+        if start_date > end_date:
+            st.error("Error: La fecha de inicio debe ser menor a la fecha de término.")
+        elif start_date and end_date:
+            filtered_messages = df[
+                (df["submission_time"].dt.date >= start_date)
+                & (df["submission_time"].dt.date <= end_date)
+            ]
 
     avg_time_to_answer_all = df["time_to_answer"].mean()
     avg_time_to_answer_selected = filtered_messages["time_to_answer"].mean()
