@@ -30,14 +30,8 @@ jobs:
 
     - name: Commit and push
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+        git config --local user.email "ga@email.com"
+        git config --local user.name "Workflow"
         git add messages.json
         git commit -m "Add messages.json" -a
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.PAT }}
-        branch: ${{ github.ref }}
+        git push
