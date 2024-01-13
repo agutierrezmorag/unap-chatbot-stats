@@ -44,6 +44,7 @@ def main():
     messages = load_messages()
     df = pd.json_normalize(messages, sep="_")
     df["submission_time"] = pd.to_datetime(df["submission_time"])
+    df["message_id"] = df["message_id"].astype(str)
 
     col1, col2, col3 = st.columns(3)
 
