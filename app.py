@@ -1,3 +1,4 @@
+import datetime
 import json
 
 import pandas as pd
@@ -14,7 +15,6 @@ def db_connection():
     return db
 
 
-@st.cache_data(ttl=60 * 60 * 24)
 def get_messages():
     db = db_connection()
     chats_ref = db.collection("chats")
@@ -27,9 +27,23 @@ def get_messages():
         messages_ref = db.collection("chats").document(chat.id).collection("messages")
         messages = messages_ref.stream()
         for message in messages:
-            all_messages.append(message.to_dict())
+            message_dict = message.to_dict()
+            for key, value in message_dict.items():
+                if isinstance(value, datetime.datetime):
+                    message_dict[key] = value.isoformat()
+            all_messages.append(message_dict)
+
+    with open("messages.json", "w") as f:
+        json.dump(all_messages, f)
 
     return all_messages
+
+
+@st.cache_data(ttl=60 * 60 * 3)
+def load_messages():
+    with open("messages.json", "r") as f:
+        messages = json.load(f)
+    return messages
 
 
 def get_chat_count():
@@ -42,7 +56,7 @@ def get_chat_count():
 def main():
     st.set_page_config(page_title="Chatbot data", page_icon="📈", layout="wide")
     st.title("📊 UNAP Chatbot Data")
-    messages = get_messages()
+    messages = load_messages()
     df = pd.json_normalize(messages, sep="_")
 
     chat_types = df["chat_type"].unique().tolist()
