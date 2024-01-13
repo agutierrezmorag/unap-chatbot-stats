@@ -24,4 +24,14 @@ jobs:
         pip install -r requirements.txt
 
     - name: Run get_messages
-      run: python -c 'from app import get_messages; get_messages()'
+      run: python get_messages.py
+      env:
+        FIRESTORE_TEXTKEY: ${{ secrets.FIRESTORE_TEXTKEY }}
+
+    - name: Commit and push
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add messages.json
+        git commit -m "Add messages.json" -a
+        git push
