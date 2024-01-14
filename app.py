@@ -98,6 +98,13 @@ def main():
             filtered_messages["user_feedback_score"] == selected_user_score
         ]
 
+    message_display_count = st.slider(
+        "Numero de mensajes a considerar",
+        min_value=1,
+        max_value=len(filtered_messages),
+        value=len(filtered_messages),
+    )
+
     if question_query:
         filtered_messages = filtered_messages[
             filtered_messages["question"]
@@ -135,7 +142,7 @@ def main():
     delta_cost = total_cost_selected - total_cost_all
 
     st.dataframe(
-        filtered_messages,
+        filtered_messages.tail(message_display_count),
         use_container_width=True,
         column_order=[
             "chat_type",
