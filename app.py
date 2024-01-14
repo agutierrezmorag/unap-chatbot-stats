@@ -134,7 +134,21 @@ def main():
     total_cost_selected = filtered_messages["tokens_total_cost_usd"].sum()
     delta_cost = total_cost_selected - total_cost_all
 
-    st.write(filtered_messages)
+    st.dataframe(
+        filtered_messages,
+        use_container_width=True,
+        column_order=[
+            "chat_type",
+            "question",
+            "answer",
+            "time_to_answer",
+            "tokens_total_tokens",
+            "tokens_total_cost_usd",
+            "user_feedback_score",
+            "user_feedback_text",
+            "submission_time",
+        ],
+    )
 
     col1, col2, col3, col4 = st.columns(4)
     with col1:
