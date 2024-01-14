@@ -155,6 +155,26 @@ def main():
             "user_feedback_text",
             "submission_time",
         ],
+        column_config={
+            "chat_type": "Tipo de chat",
+            "question": "Pregunta",
+            "answer": "Respuesta",
+            "time_to_answer": st.column_config.NumberColumn(
+                "Tiempo de respuesta (s)", format="%.2f"
+            ),
+            "tokens_total_tokens": "Total Tokens",
+            "tokens_total_cost_usd": st.column_config.NumberColumn(
+                "Costo en USD", format="$%.3f"
+            ),
+            "user_feedback_score": "Puntaje de usuario",
+            "user_feedback_text": "Comentario de usuario",
+            "submission_time": st.column_config.DatetimeColumn(
+                "Fecha de envío",
+                format="D MMM YYYY, h:mm a",
+                timezone="America/Santiago",
+                help="Fecha y hora en que se envió el mensaje.",
+            ),
+        },
     )
 
     col1, col2, col3, col4 = st.columns(4)
