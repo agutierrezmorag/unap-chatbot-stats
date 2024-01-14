@@ -51,8 +51,11 @@ def main():
 
     with col1:
         chat_types = df["chat_type"].unique().tolist()
-        chat_types.insert(0, "--")
-        selected_chat_type = st.selectbox("Tipo de chat", options=chat_types)
+        selected_chat_types = st.multiselect(
+            "Tipo de chat",
+            options=chat_types,
+            placeholder="Seleccione uno o más tipos de chat",
+        )
 
     with col2:
         user_scores = df["user_feedback_score"].unique().tolist()
@@ -83,10 +86,10 @@ def main():
     with col5:
         answer_query = st.text_input("Buscar por respuesta...")
 
-    if selected_chat_type == "--":
+    if not selected_chat_types:
         filtered_messages = df
     else:
-        filtered_messages = df[df["chat_type"] == selected_chat_type]
+        filtered_messages = df[df["chat_type"].isin(selected_chat_types)]
 
     if selected_user_score == "--":
         filtered_messages = filtered_messages
@@ -139,7 +142,7 @@ def main():
     with col2:
         st.metric(
             "Tiempo promedio de respuesta",
-            avg_time_to_answer_selected,
+            round(avg_time_to_answer_selected, 2),
             delta=delta_time_to_answer,
             delta_color="inverse",
         )
@@ -152,7 +155,7 @@ def main():
     with col4:
         st.metric(
             "Costo total en USD",
-            total_cost_selected,
+            round(total_cost_selected, 2),
             delta=delta_cost,
         )
 
@@ -188,7 +191,6 @@ def main():
     values1 = [chat_count1, avg_time_to_answer1, message_count1, total_cost1]
     values2 = [chat_count2, avg_time_to_answer2, message_count2, total_cost2]
 
-    # Create columns for each metric
     cols = st.columns(len(metrics))
 
     for metric, value1, value2, col in zip(metrics, values1, values2, cols):
@@ -199,12 +201,11 @@ def main():
         plt.title(metric)
         plt.ylabel(metric)
 
-        # Add data labels
         for bar in bars:
             yval = bar.get_height()
             plt.text(
                 bar.get_x() + bar.get_width() / 2.0, yval, round(yval, 2), va="bottom"
-            )  # va: vertical alignment
+            )
 
         col.pyplot(plt)
 
