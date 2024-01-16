@@ -35,5 +35,4 @@ jobs:
         git config --global user.email "ga@email.com"
         git config --global user.name "Github Actions"
         git add messages.json
-        git commit -m "Add messages.json" -a
-        git push
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Add messages.json" -a && git push)
