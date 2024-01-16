@@ -22,10 +22,6 @@ def load_messages():
     return messages
 
 
-def get_chat_count(df):
-    return len(df)
-
-
 def get_avg_time_to_answer(df):
     return df["time_to_answer"].mean()
 
