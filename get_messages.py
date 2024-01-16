@@ -45,8 +45,8 @@ def get_messages():
     except Exception as e:
         print(e)
 
-    with open("messages.json", "w") as f:
-        json.dump(all_messages, f)
+    with open("messages.json", "w", encoding="utf-8") as f:
+        json.dump(all_messages, f, ensure_ascii=False)
 
     return all_messages
 
