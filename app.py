@@ -37,6 +37,7 @@ def get_total_cost(df):
 def main():
     st.set_page_config(page_title="Chatbot data", page_icon="📈", layout="wide")
     st.title("📊 UNAP Chatbot Data")
+    st.markdown("Visualizacion de todos los datos registrados.")
 
     messages = load_messages()
     df = pd.json_normalize(messages, sep="_")
@@ -178,7 +179,10 @@ def main():
                 "Puntaje de usuario",
                 width="small",
             ),
-            "user_feedback_text": "Feedback",
+            "user_feedback_text": st.column_config.Column(
+                "Feedback",
+                help="Comentario opcional proporcionado por el usuario.",
+            ),
             "submission_time": st.column_config.DatetimeColumn(
                 "Fecha",
                 format="D MMM YYYY, h:mm a",
@@ -202,6 +206,7 @@ def main():
             "Mensajes",
             selected_message_count,
             delta=delta_message_count,
+            delta_color="off",
             help="Tiempo promedio de respuesta de lo filtrado comparado con todos los mensajes.",
         )
     with col3:
