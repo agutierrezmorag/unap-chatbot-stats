@@ -142,7 +142,7 @@ def main():
     total_cost_selected = filtered_messages["tokens_total_cost_usd"].sum()
     delta_cost = total_cost_selected - total_cost_all
 
-    st.data_editor(
+    st.dataframe(
         filtered_messages.tail(message_display_count),
         use_container_width=True,
         column_order=[
