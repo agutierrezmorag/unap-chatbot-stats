@@ -68,6 +68,7 @@ def main():
             start_date = st.date_input(
                 "Fecha de inicio",
                 None,
+                format="DD/MM/YYYY",
                 min_value=df["submission_time"].min().date(),
                 max_value=df["submission_time"].max().date(),
             )
@@ -75,6 +76,7 @@ def main():
             end_date = st.date_input(
                 "Fecha de término",
                 None,
+                format="DD/MM/YYYY",
                 min_value=df["submission_time"].min().date(),
                 max_value=df["submission_time"].max().date(),
             )
@@ -91,15 +93,14 @@ def main():
     else:
         filtered_messages = df[df["chat_type"].isin(selected_chat_types)]
 
-    if selected_user_score == "--":
-        filtered_messages = filtered_messages
-    else:
+    if selected_user_score != "--":
         filtered_messages = filtered_messages[
             filtered_messages["user_feedback_score"] == selected_user_score
         ]
 
     message_display_count = st.slider(
         "Numero de mensajes a considerar",
+        help="Se consideraran los ultimos X mensajes.",
         min_value=1,
         max_value=len(filtered_messages),
         value=len(filtered_messages),
@@ -121,8 +122,8 @@ def main():
 
     if start_date and end_date:
         if start_date > end_date:
-            st.error("Error: La fecha de inicio debe ser menor a la fecha de término.")
-        elif start_date and end_date:
+            st.error("Error: La fecha de inicio debe ser previo a la fecha de término.")
+        else:
             filtered_messages = df[
                 (df["submission_time"].dt.date >= start_date)
                 & (df["submission_time"].dt.date <= end_date)
@@ -160,47 +161,52 @@ def main():
             "question": "Pregunta",
             "answer": "Respuesta",
             "time_to_answer": st.column_config.NumberColumn(
-                "Tiempo de respuesta (s)", format="%.2f"
+                "Tiempo de respuesta (s)",
+                format="%.2f",
+                help="Este tiempo considera desde que el usuario realiza la pregunta hasta que la respuesta es mostrada en pantalla.",
             ),
             "tokens_total_tokens": "Total Tokens",
             "tokens_total_cost_usd": st.column_config.NumberColumn(
-                "Costo en USD", format="$%.3f"
+                "Costo (USD)", format="$%.3f"
             ),
             "user_feedback_score": "Puntaje de usuario",
             "user_feedback_text": "Comentario de usuario",
             "submission_time": st.column_config.DatetimeColumn(
-                "Fecha de envío",
+                "Fecha",
                 format="D MMM YYYY, h:mm a",
                 timezone="America/Santiago",
-                help="Fecha y hora en que se envió el mensaje.",
+                help="Fecha y hora en que se proceso la pregunta.",
             ),
         },
     )
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Chats", len(df))
-    with col2:
         st.metric(
             "Tiempo promedio de respuesta",
             round(avg_time_to_answer_selected, 2),
             delta=delta_time_to_answer,
             delta_color="inverse",
+            help="Tiempo promedio de respuesta de lo filtrado comparado con todos los mensajes.",
         )
-    with col3:
+    with col2:
         st.metric(
             "Mensajes",
             selected_message_count,
             delta=delta_message_count,
+            help="Tiempo promedio de respuesta de lo filtrado comparado con todos los mensajes.",
         )
-    with col4:
+    with col3:
         st.metric(
             "Costo total en USD",
             round(total_cost_selected, 2),
             delta=delta_cost,
+            help="Costo total de lo filtrado comparado con todos los mensajes.",
         )
 
     st.markdown("# 💸 Comparación de costos")
+
+    st.markdown("Comparacion entre dos tipos de chat.")
 
     comp_col1, comp_col2 = st.columns(2)
 
@@ -210,9 +216,6 @@ def main():
         chat_type2 = st.selectbox("Con...", options=df["chat_type"].unique())
 
     # Calculate metrics for each chat type
-    chat_count1 = get_chat_count(df[df["chat_type"] == chat_type1])
-    chat_count2 = get_chat_count(df[df["chat_type"] == chat_type2])
-
     avg_time_to_answer1 = get_avg_time_to_answer(df[df["chat_type"] == chat_type1])
     avg_time_to_answer2 = get_avg_time_to_answer(df[df["chat_type"] == chat_type2])
 
@@ -224,20 +227,19 @@ def main():
 
     # Display metrics side by side
     metrics = [
-        "Chats",
         "Tiempo promedio de respuesta",
         "Mensajes",
         "Costo total en USD",
     ]
-    values1 = [chat_count1, avg_time_to_answer1, message_count1, total_cost1]
-    values2 = [chat_count2, avg_time_to_answer2, message_count2, total_cost2]
+    values1 = [avg_time_to_answer1, message_count1, total_cost1]
+    values2 = [avg_time_to_answer2, message_count2, total_cost2]
 
     cols = st.columns(len(metrics))
 
     for metric, value1, value2, col in zip(metrics, values1, values2, cols):
         plt.figure(figsize=(6, 4))
         bars = plt.bar(
-            [chat_type1, chat_type2], [value1, value2], color=["#1f77b4", "#ff7f0e"]
+            [chat_type1, chat_type2], [value1, value2], color=["#0069B1", "#11B334"]
         )
         plt.title(metric)
         plt.ylabel(metric)
