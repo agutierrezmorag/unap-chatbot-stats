@@ -126,19 +126,6 @@ def main():
                 & (df["submission_time"].dt.date <= end_date)
             ]
 
-    avg_time_to_answer_all = df["time_to_answer"].mean()
-    avg_time_to_answer_selected = filtered_messages["time_to_answer"].mean()
-
-    delta_time_to_answer = avg_time_to_answer_selected - avg_time_to_answer_all
-
-    total_message_count = len(df)
-    selected_message_count = len(filtered_messages)
-    delta_message_count = selected_message_count - total_message_count
-
-    total_cost_all = df["tokens_total_cost_usd"].sum()
-    total_cost_selected = filtered_messages["tokens_total_cost_usd"].sum()
-    delta_cost = total_cost_selected - total_cost_all
-
     st.dataframe(
         filtered_messages.tail(message_display_count),
         use_container_width=True,
@@ -192,6 +179,19 @@ def main():
         },
     )
 
+    avg_time_to_answer_all = df["time_to_answer"].mean()
+    avg_time_to_answer_selected = filtered_messages["time_to_answer"].mean()
+
+    delta_time_to_answer = avg_time_to_answer_selected - avg_time_to_answer_all
+
+    total_message_count = len(df)
+    selected_message_count = len(filtered_messages)
+    delta_message_count = selected_message_count - total_message_count
+
+    total_cost_all = df["tokens_total_cost_usd"].sum()
+    total_cost_selected = filtered_messages["tokens_total_cost_usd"].sum()
+    delta_cost = total_cost_selected - total_cost_all
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric(
@@ -218,7 +218,6 @@ def main():
         )
 
     st.markdown("# 💸 Comparación de costos")
-
     st.markdown("Comparacion de metricas entre dos tipos de chat.")
 
     comp_col1, comp_col2 = st.columns(2)
