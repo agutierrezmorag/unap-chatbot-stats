@@ -43,6 +43,8 @@ def main():
     df = pd.json_normalize(messages, sep="_")
     df["submission_time"] = pd.to_datetime(df["submission_time"])
     df["message_id"] = df["message_id"].astype(str)
+    checkbox_ids = [False for _ in range(len(df))]
+    df["evaluate"] = checkbox_ids
 
     col1, col2, col3 = st.columns(3)
 
@@ -126,7 +128,7 @@ def main():
                 & (df["submission_time"].dt.date <= end_date)
             ]
 
-    st.dataframe(
+    st.data_editor(
         filtered_messages.tail(message_display_count),
         use_container_width=True,
         column_order=[
@@ -139,6 +141,7 @@ def main():
             "user_feedback_score",
             "user_feedback_text",
             "submission_time",
+            "evaluate",
         ],
         column_config={
             "chat_type": "Tipo de chat",
@@ -175,6 +178,12 @@ def main():
                 format="D MMM YYYY, h:mm a",
                 timezone="America/Santiago",
                 help="Fecha y hora en que se proceso la pregunta.",
+            ),
+            "evaluate": st.column_config.CheckboxColumn(
+                "Evaluar",
+                help="Selecciona para evaluar la calidad de la respuesta, comparandola con los documentos consultados para su generacion.",
+                default=False,
+                width="small",
             ),
         },
     )
