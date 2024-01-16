@@ -33,6 +33,13 @@ def get_messages():
                 for key, value in message_dict.items():
                     if isinstance(value, datetime.datetime):
                         message_dict[key] = value.isoformat()
+
+                # Fetch the documents from the 'sources' sub-collection
+                sources_ref = messages_ref.document(message.id).collection("sources")
+                sources = sources_ref.stream()
+                sources_list = [source.to_dict() for source in sources]
+                message_dict["sources"] = sources_list
+
                 all_messages.append(message_dict)
             print(f"{i}/{total_chats} done.")
     except Exception as e:
