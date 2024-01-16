@@ -100,7 +100,7 @@ def main():
 
     message_display_count = st.slider(
         "Numero de mensajes a considerar",
-        help="Se consideraran los ultimos X mensajes.",
+        help="Se consideraran los ultimos mensajes, segun la cantidad seleccionada.",
         min_value=1,
         max_value=len(filtered_messages),
         value=len(filtered_messages),
@@ -142,7 +142,7 @@ def main():
     total_cost_selected = filtered_messages["tokens_total_cost_usd"].sum()
     delta_cost = total_cost_selected - total_cost_all
 
-    st.dataframe(
+    st.data_editor(
         filtered_messages.tail(message_display_count),
         use_container_width=True,
         column_order=[
@@ -158,19 +158,31 @@ def main():
         ],
         column_config={
             "chat_type": "Tipo de chat",
-            "question": "Pregunta",
+            "question": st.column_config.Column(
+                "Pregunta",
+                width="medium",
+            ),
             "answer": "Respuesta",
             "time_to_answer": st.column_config.NumberColumn(
                 "Tiempo de respuesta (s)",
                 format="%.2f",
+                width="small",
                 help="Este tiempo considera desde que el usuario realiza la pregunta hasta que la respuesta es mostrada en pantalla.",
             ),
-            "tokens_total_tokens": "Total Tokens",
-            "tokens_total_cost_usd": st.column_config.NumberColumn(
-                "Costo (USD)", format="$%.3f"
+            "tokens_total_tokens": st.column_config.Column(
+                "Total de tokens",
+                width="small",
             ),
-            "user_feedback_score": "Puntaje de usuario",
-            "user_feedback_text": "Comentario de usuario",
+            "tokens_total_cost_usd": st.column_config.NumberColumn(
+                "Costo (USD)",
+                format="$%.3f",
+                width="small",
+            ),
+            "user_feedback_score": st.column_config.Column(
+                "Puntaje de usuario",
+                width="small",
+            ),
+            "user_feedback_text": "Feedback",
             "submission_time": st.column_config.DatetimeColumn(
                 "Fecha",
                 format="D MMM YYYY, h:mm a",
@@ -198,7 +210,7 @@ def main():
         )
     with col3:
         st.metric(
-            "Costo total en USD",
+            "Costo total (USD)",
             round(total_cost_selected, 2),
             delta=delta_cost,
             help="Costo total de lo filtrado comparado con todos los mensajes.",
@@ -206,7 +218,7 @@ def main():
 
     st.markdown("# 💸 Comparación de costos")
 
-    st.markdown("Comparacion entre dos tipos de chat.")
+    st.markdown("Comparacion de metricas entre dos tipos de chat.")
 
     comp_col1, comp_col2 = st.columns(2)
 
@@ -229,7 +241,7 @@ def main():
     metrics = [
         "Tiempo promedio de respuesta",
         "Mensajes",
-        "Costo total en USD",
+        "Costo total (USD)",
     ]
     values1 = [avg_time_to_answer1, message_count1, total_cost1]
     values2 = [avg_time_to_answer2, message_count2, total_cost2]
