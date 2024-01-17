@@ -41,7 +41,7 @@ def get_messages():
                 message_dict["sources"] = sources_list
 
                 all_messages.append(message_dict)
-            print(f"{i}/{total_chats} done.")
+            print(f"{i}/{total_chats} chats done.")
     except Exception as e:
         print(e)
 
