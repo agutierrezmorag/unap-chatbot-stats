@@ -1,3 +1,4 @@
+import ast
 import json
 
 import matplotlib.pyplot as plt
@@ -5,6 +6,8 @@ import pandas as pd
 import streamlit as st
 from google.cloud import firestore
 from google.oauth2 import service_account
+from sentence_transformers import SentenceTransformer
+from sklearn.metrics.pairwise import cosine_similarity
 
 
 @st.cache_resource
@@ -32,6 +35,30 @@ def get_message_count(df):
 
 def get_total_cost(df):
     return df["tokens_total_cost_usd"].sum()
+
+
+@st.cache_resource
+def get_comparison_model():
+    model = SentenceTransformer(
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    )
+    return model
+
+
+def perform_comparison(df):
+    model = get_comparison_model()
+    for i in range(len(df)):
+        if df.loc[i, "evaluate"]:
+            sources = ast.literal_eval(df.loc[i, "sources"])
+            contexts = [source["context"] for source in sources]
+            answer = df.loc[i, "answer"]
+            for context in contexts:
+                context_vector = model.encode(context)
+                answer_vector = model.encode(answer)
+                similarity = cosine_similarity([context_vector], [answer_vector])[0][0]
+                st.write(
+                    f"Semantic similarity for row {i} between context and answer: {similarity}"
+                )
 
 
 def main():
@@ -128,6 +155,10 @@ def main():
                 & (df["submission_time"].dt.date <= end_date)
             ]
 
+    filtered_messages["sources"] = filtered_messages["sources"].apply(
+        lambda x: str(x) if x is not None else None
+    )
+
     st.data_editor(
         filtered_messages.tail(message_display_count),
         use_container_width=True,
@@ -135,6 +166,7 @@ def main():
             "chat_type",
             "question",
             "answer",
+            "sources",
             "time_to_answer",
             "tokens_total_tokens",
             "tokens_total_cost_usd",
@@ -144,12 +176,16 @@ def main():
             "evaluate",
         ],
         column_config={
-            "chat_type": "Tipo de chat",
+            "chat_type": st.column_config.Column(
+                "Tipo de chat",
+                width="small",
+            ),
             "question": st.column_config.Column(
                 "Pregunta",
-                width="medium",
+                width="small",
             ),
             "answer": "Respuesta",
+            "sources": "Fuentes",
             "time_to_answer": st.column_config.NumberColumn(
                 "Tiempo de respuesta (s)",
                 format="%.2f",
@@ -187,6 +223,9 @@ def main():
             ),
         },
     )
+
+    if st.button("Evaluar"):
+        perform_comparison(filtered_messages)
 
     avg_time_to_answer_all = df["time_to_answer"].mean()
     avg_time_to_answer_selected = filtered_messages["time_to_answer"].mean()
