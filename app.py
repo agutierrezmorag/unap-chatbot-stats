@@ -20,7 +20,7 @@ def db_connection():
 
 @st.cache_data(ttl=60 * 60 * 3)
 def load_messages():
-    with open("messages.json", "r") as f:
+    with open("messages.json", "r", encoding="utf-8") as f:
         messages = json.load(f)
     return messages
 
