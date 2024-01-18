@@ -9,6 +9,68 @@ from google.oauth2 import service_account
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
+column_order = [
+    "chat_type",
+    "question",
+    "answer",
+    "sources",
+    "time_to_answer",
+    "tokens_total_tokens",
+    "tokens_total_cost_usd",
+    "user_feedback_score",
+    "user_feedback_text",
+    "submission_time",
+    "evaluate",
+]
+
+column_config = {
+    "chat_type": st.column_config.Column(
+        "Tipo de chat",
+        width="small",
+    ),
+    "question": st.column_config.Column(
+        "Pregunta",
+        width="small",
+    ),
+    "answer": "Respuesta",
+    "sources": "Fuentes",
+    "time_to_answer": st.column_config.NumberColumn(
+        "Tiempo de respuesta (s)",
+        format="%.2f",
+        width="small",
+        help="Este tiempo considera desde que el usuario realiza la pregunta hasta que la respuesta es mostrada en pantalla.",
+    ),
+    "tokens_total_tokens": st.column_config.Column(
+        "Total de tokens",
+        width="small",
+    ),
+    "tokens_total_cost_usd": st.column_config.NumberColumn(
+        "Costo (USD)",
+        format="$%.3f",
+        width="small",
+    ),
+    "user_feedback_score": st.column_config.Column(
+        "Puntaje de usuario",
+        width="small",
+    ),
+    "user_feedback_text": st.column_config.Column(
+        "Feedback",
+        help="Comentario opcional proporcionado por el usuario.",
+    ),
+    "submission_time": st.column_config.DatetimeColumn(
+        "Fecha",
+        format="D MMM YYYY, h:mm a",
+        timezone="America/Santiago",
+        help="Fecha y hora en que se proceso la pregunta.",
+    ),
+    "evaluate": st.column_config.CheckboxColumn(
+        "Evaluar",
+        help="Selecciona para evaluar la calidad de la respuesta, comparandola con los documentos consultados para su generacion.",
+        default=False,
+        width="small",
+    ),
+}
+
 
 @st.cache_resource
 def db_connection():
@@ -162,66 +224,8 @@ def main():
     st.data_editor(
         filtered_messages.tail(message_display_count),
         use_container_width=True,
-        column_order=[
-            "chat_type",
-            "question",
-            "answer",
-            "sources",
-            "time_to_answer",
-            "tokens_total_tokens",
-            "tokens_total_cost_usd",
-            "user_feedback_score",
-            "user_feedback_text",
-            "submission_time",
-            "evaluate",
-        ],
-        column_config={
-            "chat_type": st.column_config.Column(
-                "Tipo de chat",
-                width="small",
-            ),
-            "question": st.column_config.Column(
-                "Pregunta",
-                width="small",
-            ),
-            "answer": "Respuesta",
-            "sources": "Fuentes",
-            "time_to_answer": st.column_config.NumberColumn(
-                "Tiempo de respuesta (s)",
-                format="%.2f",
-                width="small",
-                help="Este tiempo considera desde que el usuario realiza la pregunta hasta que la respuesta es mostrada en pantalla.",
-            ),
-            "tokens_total_tokens": st.column_config.Column(
-                "Total de tokens",
-                width="small",
-            ),
-            "tokens_total_cost_usd": st.column_config.NumberColumn(
-                "Costo (USD)",
-                format="$%.3f",
-                width="small",
-            ),
-            "user_feedback_score": st.column_config.Column(
-                "Puntaje de usuario",
-                width="small",
-            ),
-            "user_feedback_text": st.column_config.Column(
-                "Feedback",
-                help="Comentario opcional proporcionado por el usuario.",
-            ),
-            "submission_time": st.column_config.DatetimeColumn(
-                "Fecha",
-                format="D MMM YYYY, h:mm a",
-                timezone="America/Santiago",
-                help="Fecha y hora en que se proceso la pregunta.",
-            ),
-            "evaluate": st.column_config.CheckboxColumn(
-                "Evaluar",
-                help="Selecciona para evaluar la calidad de la respuesta, comparandola con los documentos consultados para su generacion.",
-                default=False,
-                width="small",
-            ),
-        },
+        column_order=column_order,
+        column_config=column_config,
     )
 
     if st.button("Evaluar"):
@@ -268,22 +272,30 @@ def main():
     st.markdown("# 💸 Comparación de costos")
     st.markdown("Comparacion de metricas entre dos tipos de chat.")
 
-    comp_col1, comp_col2 = st.columns(2)
+    comp_col1, comp_col2, comp_col3 = st.columns(3)
 
     with comp_col1:
         chat_type1 = st.selectbox("Comparar...", options=df["chat_type"].unique())
     with comp_col2:
         chat_type2 = st.selectbox("Con...", options=df["chat_type"].unique())
+    with comp_col3:
+        num_messages = st.number_input(
+            "Numero de mensajes", min_value=1, value=10, step=1
+        )
+
+    # Filter the DataFrame based on the selected chat types and number of messages
+    df1 = df[df["chat_type"] == chat_type1].tail(num_messages)
+    df2 = df[df["chat_type"] == chat_type2].tail(num_messages)
 
     # Calculate metrics for each chat type
-    avg_time_to_answer1 = get_avg_time_to_answer(df[df["chat_type"] == chat_type1])
-    avg_time_to_answer2 = get_avg_time_to_answer(df[df["chat_type"] == chat_type2])
+    avg_time_to_answer1 = get_avg_time_to_answer(df1)
+    avg_time_to_answer2 = get_avg_time_to_answer(df2)
 
-    message_count1 = get_message_count(df[df["chat_type"] == chat_type1])
-    message_count2 = get_message_count(df[df["chat_type"] == chat_type2])
+    message_count1 = get_message_count(df1)
+    message_count2 = get_message_count(df2)
 
-    total_cost1 = get_total_cost(df[df["chat_type"] == chat_type1])
-    total_cost2 = get_total_cost(df[df["chat_type"] == chat_type2])
+    total_cost1 = get_total_cost(df1)
+    total_cost2 = get_total_cost(df2)
 
     # Display metrics side by side
     metrics = [
@@ -311,6 +323,24 @@ def main():
             )
 
         col.pyplot(plt)
+
+    dfcol1, dfcol2 = st.columns(2)
+
+    with dfcol1:
+        st.dataframe(
+            df1,
+            use_container_width=True,
+            column_order=column_order,
+            column_config=column_config,
+        )
+
+    with dfcol2:
+        st.dataframe(
+            df2,
+            use_container_width=True,
+            column_order=column_order,
+            column_config=column_config,
+        )
 
 
 if __name__ == "__main__":
