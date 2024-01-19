@@ -109,18 +109,76 @@ def get_comparison_model():
 
 def perform_comparison(df):
     model = get_comparison_model()
-    for i in range(len(df)):
-        if df.loc[i, "evaluate"]:
-            sources = ast.literal_eval(df.loc[i, "sources"])
-            contexts = [source["context"] for source in sources]
-            answer = df.loc[i, "answer"]
-            for context in contexts:
-                context_vector = model.encode(context)
-                answer_vector = model.encode(answer)
-                similarity = cosine_similarity([context_vector], [answer_vector])[0][0]
-                st.write(
-                    f"Semantic similarity for row {i} between context and answer: {similarity}"
-                )
+
+    # Iterate over the rows in the DataFrame
+    for _, row in df.iterrows():
+        # Initialize lists to store the data
+        answers = []
+        compared_contexts = []
+        similarity_scores = []
+
+        # Initialize lists to store the data for the combined context comparison
+        combined_answers = []
+        combined_contexts = []
+        combined_scores = []
+
+        # Get the embedding for the 'answer'
+        answer_embedding = model.encode([row["answer"]], convert_to_tensor=True)
+
+        # Extract the 'context' values from the 'sources'
+        if row["sources"] is not None:
+            contexts = [d["context"] for d in row["sources"]]
+            context_embeddings = model.encode(contexts, convert_to_tensor=True)
+
+            # Calculate the cosine similarity for each 'context'
+            scores = cosine_similarity(answer_embedding, context_embeddings)
+
+            # Flatten the scores and add the data to the lists
+            scores_flat = scores.flatten().tolist()
+            answers.extend([row["answer"]] * len(contexts))
+            compared_contexts.extend(contexts)
+            similarity_scores.extend(scores_flat)
+
+            # Combine all the 'context' values into one string and get its embedding
+            combined_context = " ".join(contexts)
+            combined_context_embedding = model.encode(
+                [combined_context], convert_to_tensor=True
+            )
+
+            # Calculate the cosine similarity for the combined 'context'
+            combined_score = cosine_similarity(
+                answer_embedding, combined_context_embedding
+            )
+
+            # Flatten the score and add the data to the lists
+            combined_score_flat = combined_score.flatten()[0]
+            combined_answers.append(row["answer"])
+            combined_contexts.append(combined_context)
+            combined_scores.append(combined_score_flat)
+
+        # Create a DataFrame with the compared values and their scores
+        compared_values_df = pd.DataFrame(
+            {
+                "Respuesta": answers,
+                "Contexto": compared_contexts,
+                "Similarity Score": similarity_scores,
+            }
+        )
+
+        # Create a DataFrame with the compared values and their scores for the combined context comparison
+        combined_values_df = pd.DataFrame(
+            {
+                "Respuesta": combined_answers,
+                "Contexto (concatenado)": combined_contexts,
+                "Similarity Score": combined_scores,
+            }
+        )
+
+        # Display the DataFrames
+        st.markdown(f"## Evaluacion de respuesta: {row['question']}")
+        st.dataframe(compared_values_df, use_container_width=True, hide_index=True)
+        st.dataframe(combined_values_df, use_container_width=True, hide_index=True)
+        st.divider()
 
 
 def main():
@@ -218,18 +276,23 @@ def main():
             ]
 
     filtered_messages["sources"] = filtered_messages["sources"].apply(
-        lambda x: str(x) if x is not None else None
+        lambda x: x if x is not None else None
     )
 
     st.data_editor(
         filtered_messages.tail(message_display_count),
+        key="data_editor",
         use_container_width=True,
         column_order=column_order,
         column_config=column_config,
     )
 
+    changed_rows = []
+    for row in st.session_state.data_editor["edited_rows"]:
+        changed_rows.append(row)
+    st.write(filtered_messages.loc[changed_rows])
     if st.button("Evaluar"):
-        perform_comparison(filtered_messages)
+        perform_comparison(filtered_messages.loc[changed_rows])
 
     avg_time_to_answer_all = df["time_to_answer"].mean()
     avg_time_to_answer_selected = filtered_messages["time_to_answer"].mean()
