@@ -28,6 +28,8 @@ if __name__ == "__main__":
             ["WebApp Chat", "Test Chat", "gpt-3.5-turbo-1106", "gpt-4-turbo-preview"],
             default=None,
             placeholder="Elija uno o mas tags",
+            help="Los tags no pueden ser de la misma categoria. Por ejemplo, elegir 'WebApp Chat' y 'Test Chat' lanzara un error.",
+            max_selections=2,
         )
 
     if env_type:
