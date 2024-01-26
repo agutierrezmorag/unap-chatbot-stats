@@ -151,8 +151,10 @@ if __name__ == "__main__":
     with col1:
         st.metric("Total de ejecuciones:", total_runs)
     with col2:
-        st.metric("Tokens Promedio:", f"{total_tokens_avg:.2f}")
+        st.metric(
+            "Tokens Promedio:", f"{total_tokens_avg:.2f}", help=f"{total_tokens_avg}"
+        )
     with col3:
         st.metric("Tokens Totales:", total_tokens_sum)
     with col4:
-        st.metric("Costo Total (USD):", f"{total_sum:.4f}")
+        st.metric("Costo Total (USD):", f"{total_sum:.4f}", help=f"{total_sum}")
