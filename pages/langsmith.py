@@ -23,14 +23,29 @@ if __name__ == "__main__":
 
     fcol1, fcol2, fcol3 = st.columns(3)
     with fcol1:
-        env_type = st.selectbox("Entorno de chat", ["--", "Test Chat", "WebApp Chat"])
-
-    if env_type != "--":
-        project_list = client.list_runs(
-            project_name=st.secrets.langsmith.project,
-            execution_order=1,
-            filter=f"has(tags, '{env_type}')",
+        env_type = st.multiselect(
+            "Tags",
+            ["WebApp Chat", "Test Chat", "gpt-3.5-turbo-1106", "gpt-4-turbo-preview"],
+            default=None,
+            placeholder="Elija uno o mas tags",
         )
+
+    if env_type:
+        if len(env_type) == 1:
+            filter_string = f"has(tags, '{env_type[0]}')"
+        else:
+            filter_string = ", ".join([f"has(tags, '{tag}')" for tag in env_type])
+            filter_string = f"and({filter_string})"
+
+        try:
+            project_list = client.list_runs(
+                project_name=st.secrets.langsmith.project,
+                execution_order=1,
+                filter=filter_string,
+            )
+        except Exception as e:
+            st.error(e)
+            st.stop()
     else:
         project_list = client.list_runs(
             project_name=st.secrets.langsmith.project, execution_order=1
@@ -145,16 +160,36 @@ if __name__ == "__main__":
     total_sum = project_list_df["total"].sum()
 
     total_tokens_avg = project_list_df["total_tokens"].mean()
+    total_cost_avg = project_list_df["total"].mean()
+
+    success_percentage = (
+        project_list_df["status"].value_counts(normalize=True)["success"] * 100
+    )
+
+    status_counts = project_list_df["status"].value_counts()
+    successful_runs = status_counts["success"]
+    total_runs = status_counts.sum()
 
     # Display the total values
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     with col1:
         st.metric("Total de ejecuciones:", total_runs)
     with col2:
         st.metric(
+            "Ejecuciones Exitosas:",
+            f"{success_percentage:.2f}%",
+            help=f"{success_percentage}",
+        )
+        st.markdown(f"**{successful_runs}** de {total_runs} runs fueron exitosas")
+    with col3:
+        st.metric(
             "Tokens Promedio:", f"{total_tokens_avg:.2f}", help=f"{total_tokens_avg}"
         )
-    with col3:
-        st.metric("Tokens Totales:", total_tokens_sum)
     with col4:
+        st.metric("Tokens Totales:", total_tokens_sum)
+    with col5:
+        st.metric(
+            "Costo Promedio (USD):", f"{total_cost_avg:.4f}", help=f"{total_cost_avg}"
+        )
+    with col6:
         st.metric("Costo Total (USD):", f"{total_sum:.4f}", help=f"{total_sum}")
