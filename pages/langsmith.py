@@ -89,6 +89,15 @@ if __name__ == "__main__":
         (project_list_df["completion_tokens"] / 1000) * 0.0020
     )
 
+    # Convert 'start_time' and 'end_time' to datetime
+    project_list_df["start_time"] = pd.to_datetime(project_list_df["start_time"])
+    project_list_df["end_time"] = pd.to_datetime(project_list_df["end_time"])
+
+    # Calculate the difference between 'end_time' and 'start_time' in seconds
+    project_list_df["time_taken"] = (
+        project_list_df["end_time"] - project_list_df["start_time"]
+    ).dt.total_seconds()
+
     # Filter the DataFrame according to the selected status
     with fcol2:
         filter_by_status = st.selectbox("Estado", ["--", "success", "error"])
@@ -120,6 +129,7 @@ if __name__ == "__main__":
             "feedback_stats",
             "start_time",
             "end_time",
+            "time_taken",
             "prompt_tokens",
             "completion_tokens",
             "total_tokens",
@@ -143,9 +153,19 @@ if __name__ == "__main__":
             "end_time": st.column_config.DatetimeColumn(
                 "Fin", format="D MMM YYYY, HH:mm:ss", width="small"
             ),
-            "prompt_tokens": "Tokens de pregunta",
-            "completion_tokens": "Tokens de respuesta",
-            "total_tokens": "Tokens totales",
+            "time_taken": st.column_config.NumberColumn(
+                "Duracion (s)",
+                format="%d",
+                width="small",
+                help="Tiempo total que tarda el run",
+            ),
+            "prompt_tokens": st.column_config.Column(
+                "Tokens de pregunta", width="small"
+            ),
+            "completion_tokens": st.column_config.Column(
+                "Tokens de respuesta", width="small"
+            ),
+            "total_tokens": st.column_config.Column("Tokens totales", width="small"),
             "total": st.column_config.NumberColumn(
                 "Costo (USD)", format="%.4f", width="small"
             ),
