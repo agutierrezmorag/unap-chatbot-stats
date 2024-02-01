@@ -21,7 +21,7 @@ if __name__ == "__main__":
     st.markdown("Tracings registrados en la organizacion **unap-chabot** en Langsmith.")
     client = Client()
 
-    fcol1, fcol2, fcol3, fcol4 = st.columns(4)
+    fcol1, fcol2, fcol3, fcol4, fcol5 = st.columns(5)
     with fcol1:
         env_type = st.multiselect(
             "Tags",
@@ -136,6 +136,17 @@ if __name__ == "__main__":
     if filter_by_name != "--":
         project_list_df = project_list_df[project_list_df["name"] == filter_by_name]
 
+    with fcol5:
+        entries = st.slider(
+            "Numero de entradas",
+            value=len(project_list_df),
+            min_value=1,
+            max_value=len(project_list_df),
+            help="Numero de entradas a mostrar",
+        )
+
+    project_list_df = project_list_df[-entries:]
+
     # Display the DataFrame
     st.dataframe(
         project_list_df,
@@ -213,8 +224,10 @@ if __name__ == "__main__":
     successful_runs = status_counts["success"]
     total_runs = status_counts.sum()
 
+    time_taken_avg = project_list_df["time_taken"].mean()
+
     # Display the total values
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1, col2, col3, col4, col5, col6, col7 = st.columns(7)
     with col1:
         st.metric("Total de ejecuciones:", total_runs)
     with col2:
@@ -236,3 +249,7 @@ if __name__ == "__main__":
         )
     with col6:
         st.metric("Costo Total (USD):", f"{total_sum:.4f}", help=f"{total_sum}")
+    with col7:
+        st.metric(
+            "Tiempo Promedio (s):", f"{time_taken_avg:.2f}", help=f"{time_taken_avg}"
+        )
