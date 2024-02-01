@@ -10,28 +10,8 @@ os.environ["LANGCHAIN_API_KEY"] = st.secrets.langsmith.api_key
 os.environ["LANGCHAIN_PROJECT"] = st.secrets.langsmith.project
 
 
-if __name__ == "__main__":
-    st.set_page_config(
-        page_title="Langsmith Data",
-        page_icon="🦜",
-        layout="wide",
-        initial_sidebar_state="collapsed",
-    )
-    st.title("📊 UNAP Chatbot Langsmith Runs Data")
-    st.markdown("Tracings registrados en la organizacion **unap-chabot** en Langsmith.")
-    client = Client()
-
-    fcol1, fcol2, fcol3, fcol4, fcol5 = st.columns(5)
-    with fcol1:
-        env_type = st.multiselect(
-            "Tags",
-            ["WebApp Chat", "Test Chat", "gpt-3.5-turbo-1106", "gpt-4-turbo-preview"],
-            default=None,
-            placeholder="Elija uno o mas tags",
-            help="Los tags no pueden ser de la misma categoria. Por ejemplo, elegir 'WebApp Chat' y 'Test Chat' lanzara un error.",
-            max_selections=2,
-        )
-
+@st.cache_data(ttl=15 * 60)
+def get_project_list(env_type=None):
     if env_type:
         if len(env_type) == 1:
             filter_string = f"has(tags, '{env_type[0]}')"
@@ -76,6 +56,36 @@ if __name__ == "__main__":
 
     # Convert project_list to a DataFrame
     project_list_df = pd.DataFrame(project_list)
+
+    return project_list_df
+
+
+if __name__ == "__main__":
+    st.set_page_config(
+        page_title="Langsmith Data",
+        page_icon="🦜",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
+    st.title("📊 UNAP Chatbot Langsmith Runs Data")
+    st.markdown("Tracings registrados en la organizacion **unap-chabot** en Langsmith.")
+    if st.button("Limpiar Cache"):
+        get_project_list.clear()
+    client = Client()
+
+    fcol1, fcol2, fcol3, fcol4, fcol5 = st.columns(5)
+    with fcol1:
+        env_type = st.multiselect(
+            "Tags",
+            ["WebApp Chat", "Test Chat", "gpt-3.5-turbo-1106", "gpt-4-turbo-preview"],
+            default=None,
+            placeholder="Elija uno o mas tags",
+            help="Los tags no pueden ser de la misma categoria. Por ejemplo, elegir 'WebApp Chat' y 'Test Chat' lanzara un error.",
+            max_selections=2,
+        )
+
+    # Convert project_list to a DataFrame
+    project_list_df = get_project_list(env_type=env_type)
 
     # Normalize the 'outputs' column and join it to the original DataFrame
     outputs_df = pd.json_normalize(project_list_df["outputs"].tolist(), sep="_")
