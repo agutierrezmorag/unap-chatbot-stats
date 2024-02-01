@@ -21,7 +21,7 @@ if __name__ == "__main__":
     st.markdown("Tracings registrados en la organizacion **unap-chabot** en Langsmith.")
     client = Client()
 
-    fcol1, fcol2, fcol3 = st.columns(3)
+    fcol1, fcol2, fcol3, fcol4 = st.columns(4)
     with fcol1:
         env_type = st.multiselect(
             "Tags",
@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     # Filter the DataFrame according to the selected status
     with fcol2:
-        filter_by_status = st.selectbox("Estado", ["--", "success", "error"])
+        filter_by_status = st.selectbox("Estado", ["--", "success", "error", "pending"])
     if filter_by_status != "--":
         project_list_df = project_list_df[project_list_df["status"] == filter_by_status]
 
@@ -115,6 +115,27 @@ if __name__ == "__main__":
             project_list_df["metadata_user_session"].isin(filter_by_session)
         ]
 
+    # Combine the 'answer' and 'output' columns
+    project_list_df["answer"] = project_list_df["answer"].combine_first(
+        project_list_df["output"]
+    )
+    # Drop the 'output' column
+    project_list_df = project_list_df.drop("output", axis=1)
+
+    # Drop the intermediate_steps column
+    project_list_df = project_list_df.drop("intermediate_steps", axis=1)
+
+    # Get the unique names
+    names = project_list_df["name"].unique()
+
+    # Display the names in a selectbox
+    with fcol4:
+        filter_by_name = st.selectbox("Nombre", ["--"] + list(names))
+
+    # Filter the DataFrame by name
+    if filter_by_name != "--":
+        project_list_df = project_list_df[project_list_df["name"] == filter_by_name]
+
     # Display the DataFrame
     st.dataframe(
         project_list_df,
@@ -122,7 +143,7 @@ if __name__ == "__main__":
         column_order=[
             "name",
             "run_type",
-            "question",
+            "inputs",
             "answer",
             "status",
             "error",
@@ -142,7 +163,7 @@ if __name__ == "__main__":
         column_config={
             "name": st.column_config.Column("Nombre", width="small"),
             "run_type": st.column_config.Column("Tipo", width="small"),
-            "question": st.column_config.Column("Pregunta", width="medium"),
+            "inputs": st.column_config.Column("Pregunta", width="medium"),
             "answer": st.column_config.Column("Respuesta", width="medium"),
             "status": st.column_config.Column("Estado", width="small"),
             "error": st.column_config.Column("Error", width="snmall"),
