@@ -326,7 +326,7 @@ def main():
     with col3:
         st.metric(
             "Costo total (USD)",
-            round(total_cost_selected, 2),
+            5.327222 + round(total_cost_selected, 2),
             delta=delta_cost,
             help="Costo total de lo filtrado comparado con todos los mensajes.",
         )

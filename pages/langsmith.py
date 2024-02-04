@@ -258,7 +258,11 @@ if __name__ == "__main__":
             "Costo Promedio (USD):", f"{total_cost_avg:.4f}", help=f"{total_cost_avg}"
         )
     with col6:
-        st.metric("Costo Total (USD):", f"{total_sum:.4f}", help=f"{total_sum}")
+        st.metric(
+            "Costo Total (USD):",
+            f"{total_sum:.4f}",
+            help=f"Costo total hasta ahora: {5.327222 + total_sum}",
+        )
     with col7:
         st.metric(
             "Tiempo Promedio (s):", f"{time_taken_avg:.2f}", help=f"{time_taken_avg}"
